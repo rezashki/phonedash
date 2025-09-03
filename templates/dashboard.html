@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phonebook Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    // fontFamily will be set by styles.css
+                }
+            }
+        }
+    </script>
+    <!-- Link to external stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="bg-gray-100 flex min-h-screen">
+    <!-- Sidebar -->
+    {% include 'sidebar.html' %}
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col items-center justify-center p-6">
+        <div class="card p-8 rounded-lg shadow-xl w-full max-w-md text-center">
+            <h1 class="text-4xl font-bold mb-8">داشبورد دفترچه تلفن</h1>
+
+            {# Flash messages will be rendered here by Flask #}
+            <div id="flash-messages" class="mb-6">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="p-4 mb-3 rounded-lg text-sm border {% if category == 'error' %}bg-red-900 text-red-200 border-red-700{% elif category == 'success' %}bg-green-900 text-green-200 border-green-700{% else %}bg-blue-900 text-blue-200 border-blue-700{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <div class="space-y-6">
+                <a href="contacts_entry.html"
+                   class="block bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105 text-xl">
+                    افزودن مخاطب جدید
+                </a>
+                <a href="contacts.html"
+                   class="block bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105 text-xl">
+                    مشاهده مخاطبین
+                </a>
+                <a href="companies.html"
+                   class="block bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105 text-xl">
+                    مدیریت شرکت‌ها
+                </a>
+                <!-- Future links can be added here -->
+            </div>
+        </div>
+    </div>
+    <!-- Link to dashboard-specific JavaScript -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

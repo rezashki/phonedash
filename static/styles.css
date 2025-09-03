@@ -1,0 +1,506 @@
+/* Define Vazirmatn fonts */
+@font-face {
+    font-family: 'Vazirmatn';
+    src: url('fonts/Vazirmatn-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Vazirmatn';
+    src: url('fonts/Vazirmatn-Bold.woff2') format('woff2');
+    font-weight: bold;
+    font-style: normal;
+}
+
+/* Root color variables based on design.json */
+:root {
+    --bg-main: #0E1220;
+    --bg-secondary: #262C3A;
+    --card-bg: linear-gradient(135deg, #1E2A47 0%, #3A3F65 100%);
+    --card-border: #2E365A;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --text-primary: #FFFFFF;
+    --text-secondary: #A2A7B3;
+    --text-heading: #FFFFFF;
+    --text-subheading: #D6D9E0;
+    --button-primary: #1E87F0;
+    --button-primary-hover: #1765B0;
+    --button-primary-active: #145D91;
+    --button-secondary: #4E5B76;
+    --button-secondary-hover: #3D475C;
+    --button-disabled: #B0BEC5;
+    --button-focus-border: #4E5B76;
+    --icon-fill: #4F5A74;
+    --icon-bg: #FFFFFF;
+    --card-icon-fill: #FFFFFF;
+}
+
+/* Apply Vazirmatn to the body with dark theme */
+body {
+    font-family: 'Vazirmatn', sans-serif;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    display: flex;
+    min-height: 100vh;
+    flex-direction: row;
+    margin: 0;
+    padding: 0;
+}
+
+/* Main content area should take remaining space */
+.flex-1 {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background: var(--bg-main);
+}
+
+/* Sidebar specific styles */
+aside {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-right: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+}
+
+/* Cards styling */
+.card, .bg-white {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--card-border) !important;
+    box-shadow: var(--card-shadow) !important;
+    color: var(--text-primary) !important;
+    border-radius: 12px !important;
+}
+
+/* Heading styles */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-heading) !important;
+}
+
+/* Subheading and secondary text */
+.text-gray-600, .text-gray-500, .text-gray-700 {
+    color: var(--text-secondary) !important;
+}
+
+/* Primary buttons */
+.bg-blue-600, .bg-blue-500, .btn-primary {
+    background: var(--button-primary) !important;
+    color: var(--text-primary) !important;
+    border: none !important;
+    transition: all 0.2s ease-in-out;
+}
+
+.bg-blue-600:hover, .bg-blue-500:hover, .btn-primary:hover,
+.hover\\:bg-blue-700:hover {
+    background: var(--button-primary-hover) !important;
+    transform: translateY(-1px);
+}
+
+.bg-blue-600:active, .bg-blue-500:active, .btn-primary:active {
+    background: var(--button-primary-active) !important;
+}
+
+/* Secondary buttons */
+.bg-gray-600, .bg-gray-500, .btn-secondary {
+    background: var(--button-secondary) !important;
+    color: var(--text-primary) !important;
+    border: none !important;
+}
+
+.bg-gray-600:hover, .bg-gray-500:hover, .btn-secondary:hover,
+.hover\\:bg-gray-700:hover {
+    background: var(--button-secondary-hover) !important;
+}
+
+/* Success/Green buttons */
+.bg-green-600, .bg-green-500 {
+    background: var(--button-primary) !important;
+    color: var(--text-primary) !important;
+}
+
+.bg-green-600:hover, .bg-green-500:hover,
+.hover\\:bg-green-700:hover {
+    background: var(--button-primary-hover) !important;
+}
+
+/* Danger/Red buttons */
+.bg-red-600, .bg-red-500 {
+    background: #DC2626 !important;
+    color: var(--text-primary) !important;
+}
+
+.bg-red-600:hover, .bg-red-500:hover,
+.hover\\:bg-red-700:hover {
+    background: #B91C1C !important;
+}
+
+/* Form inputs */
+input, select, textarea {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--card-border) !important;
+    border-radius: 8px !important;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--button-focus-border) !important;
+    box-shadow: 0 0 0 2px rgba(78, 91, 118, 0.2) !important;
+    outline: none !important;
+}
+
+/* Icons styling */
+.icon, svg {
+    fill: var(--card-icon-fill);
+}
+
+/* Table styling */
+table {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+thead th {
+    background: var(--card-bg) !important;
+    color: var(--text-heading) !important;
+    border-bottom: 1px solid var(--card-border) !important;
+}
+
+tbody tr {
+    border-bottom: 1px solid var(--card-border) !important;
+}
+
+tbody tr:hover {
+    background: rgba(78, 91, 118, 0.1) !important;
+}
+
+aside nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+aside nav ul li a {
+    text-decoration: none;
+    color: var(--text-primary) !important;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+}
+
+aside nav ul li a:hover {
+    background: var(--button-secondary) !important;
+    border-color: var(--card-border);
+    transform: translateX(-2px);
+}
+
+/* Style for the active sidebar link */
+.active-sidebar-link {
+    background: var(--button-primary) !important;
+    color: var(--text-primary) !important;
+    font-weight: bold;
+    border-color: var(--button-primary) !important;
+}
+
+/* Adjust main content padding/margin if necessary after sidebar integration */
+.p-4 {
+    padding: 1rem; /* Default Tailwind padding */
+}
+
+/* Ensure the main content div properly centers its child */
+.flex-1.flex-col.items-center.justify-center {
+    justify-content: center; /* Keep content centered vertically if desired */
+}
+
+/* Autosuggest Dropdown Styles */
+.autosuggest-dropdown {
+    position: absolute;
+    background: var(--bg-secondary);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    z-index: 50;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+    top: 100%;
+    left: 0;
+    color: var(--text-primary);
+}
+
+.autosuggest-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    text-align: right;
+    border-bottom: 1px solid var(--card-border);
+    font-size: 0.875rem;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.autosuggest-item:last-child {
+    border-bottom: none;
+}
+
+.autosuggest-item:hover {
+    background: var(--button-secondary);
+    color: var(--text-primary);
+}
+
+/* Make the table container scrollable with dark theme */
+.table-scroll-container {
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    box-shadow: var(--card-shadow);
+}
+
+/* Ensure table headers stay fixed during scroll */
+#contactList thead th {
+    position: sticky;
+    top: 0;
+    background: var(--card-bg) !important;
+    color: var(--text-heading) !important;
+    z-index: 10;
+    border-bottom: 2px solid var(--card-border) !important;
+}
+
+/* Ensure the table itself can expand to accommodate content */
+#contactList table {
+    min-width: 100%;
+    background: var(--bg-secondary) !important;
+}
+
+/* Remove overflow-x from the inner div if it was there */
+#contactList {
+    overflow-x: visible;
+    background: var(--bg-secondary) !important;
+}
+
+/* Custom styles for phone number columns */
+/* Apply min-width to headers */
+#contactList thead th[data-sort="mobile_phone"],
+#contactList thead th[data-sort="office_phone1"],
+#contactList thead th[data-sort="extension1"],
+#contactList thead th[data-sort="office_phone2"],
+#contactList thead th[data-sort="extension2"],
+#contactList thead th[data-sort="office_phone3"],
+#contactList thead th[data-sort="extension3"],
+#contactList thead th[data-sort="office_manager_mobile1"],
+#contactList thead th[data-sort="office_manager_mobile2"],
+#contactList thead th[data-sort="office_manager_mobile3"] {
+    min-width: 120px; /* Adjust as needed */
+}
+
+/* Apply min-width to data cells */
+#contactList tbody td.phone-number-column {
+    min-width: 120px; /* Adjust as needed */
+    white-space: nowrap; /* Prevent wrapping if numbers are long */
+}
+
+/* Ensure email column is LTR */
+#contactList thead th[data-sort="email"] .sortable-header {
+    justify-content: flex-start; /* Align header content to left */
+}
+
+#contactList thead th[data-sort="email"] span, /* Target the span inside the button for text alignment */
+#contactList tbody td:nth-child(12) { /* The email column is the 12th td, including the checkbox column */
+    direction: ltr;
+    text-align: left;
+}
+
+/* Ensure office email column is LTR */
+#contactList thead th[data-sort="office_email"] .sortable-header {
+    justify-content: flex-start; /* Align header content to left */
+}
+
+#contactList thead th[data-sort="office_email"] span, /* Target the span inside the button for text alignment */
+#contactList tbody td:nth-child(19) { /* The office email column is the 19th td, including the checkbox column */
+    direction: ltr;
+    text-align: left;
+}
+
+/* Styles for the company tree diagram */
+.company-tree-root {
+    list-style: none;
+    padding-right: 20px;
+    margin: 0;
+    position: relative;
+    direction: rtl;
+    color: var(--text-primary);
+}
+
+.company-node {
+    position: relative;
+    margin-bottom: 8px;
+    padding-right: 20px;
+    line-height: 1.5;
+}
+
+.company-node:last-child {
+    margin-bottom: 0;
+}
+
+/* Vertical line connecting parent to children */
+.company-node::before {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 0;
+    height: 100%;
+    width: 2px;
+    background-color: var(--card-border);
+    border-radius: 1px;
+}
+
+/* Horizontal line connecting to the node content */
+.company-node::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 1.2em;
+    width: 10px;
+    height: 2px;
+    background-color: var(--card-border);
+    border-radius: 1px;
+}
+
+/* Remove vertical line for the last child's segment */
+.company-sub-list > .company-node:last-child::before {
+    height: 1.2em;
+}
+
+/* Adjust lines for the root node (no incoming lines) */
+.company-tree-root > .company-node::before,
+.company-tree-root > .company-node::after {
+    display: none;
+}
+
+.company-sub-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    padding-right: 20px;
+}
+
+.tree-node-content {
+    display: inline-block;
+    padding: 8px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    font-size: 0.95em;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+    cursor: default;
+    box-shadow: var(--card-shadow);
+    color: var(--text-primary);
+}
+
+.tree-node-content:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    border-color: var(--button-primary);
+}
+
+/* Highlighted company style */
+.highlighted-company {
+    background: var(--button-primary) !important;
+    border-color: var(--button-primary-hover) !important;
+    font-weight: bold;
+    color: var(--text-primary) !important;
+    box-shadow: 0 6px 20px rgba(30, 135, 240, 0.4) !important;
+    transform: scale(1.05) !important;
+}
+
+/* Style for selected table rows */
+.selected-row-highlight {
+    background: rgba(30, 135, 240, 0.2) !important;
+    transition: background-color 0.2s ease-in-out;
+    color: var(--text-primary) !important;
+}
+
+/* Additional dark theme overrides */
+.bg-gray-100, .bg-gray-50 {
+    background: var(--bg-main) !important;
+}
+
+.bg-gray-200 {
+    background: var(--bg-secondary) !important;
+}
+
+.text-gray-800, .text-gray-900 {
+    color: var(--text-heading) !important;
+}
+
+.border-gray-300, .border-gray-200 {
+    border-color: var(--card-border) !important;
+}
+
+/* Modal and dropdown styling */
+.dropdown, .dropdown-menu {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Alert/Flash message styling */
+.alert, .flash-message {
+    border-radius: 8px !important;
+    border: 1px solid var(--card-border) !important;
+}
+
+/* Checkbox and radio styling */
+input[type="checkbox"], input[type="radio"] {
+    accent-color: var(--button-primary) !important;
+    background: var(--bg-secondary) !important;
+}
+
+/* Scrollbar styling for webkit browsers */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--card-border);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--button-secondary);
+}
+
+/* Loading and disabled states */
+.loading, .disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Focus states for accessibility */
+*:focus {
+    outline: 2px solid var(--button-primary) !important;
+    outline-offset: 2px !important;
+}
+
+/* Links styling */
+a {
+    color: var(--button-primary) !important;
+    transition: color 0.2s ease-in-out;
+}
+
+a:hover {
+    color: var(--button-primary-hover) !important;
+}

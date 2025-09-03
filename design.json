@@ -1,0 +1,82 @@
+{
+  "elementStyling": {
+    "cards": {
+      "background": "linear-gradient(135deg, #1E2A47 0%, #3A3F65 100%)",
+      "border": "#2E365A",
+      "shadow": "0 4px 12px rgba(0, 0, 0, 0.15)",
+      "icons": {
+        "fill": "#FFFFFF",
+        "background": "none"
+      }
+    },
+    "buttons": {
+      "primary": {
+        "background": "#1E87F0",
+        "text": "#FFFFFF",
+        "hover": {
+          "background": "#1765B0"
+        }
+      },
+      "secondary": {
+        "background": "#4E5B76",
+        "text": "#FFFFFF",
+        "hover": {
+          "background": "#3D475C"
+        }
+      }
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#A2A7B3",
+      "heading": "#FFFFFF",
+      "subheading": "#D6D9E0"
+    },
+    "background": {
+      "main": "#0E1220",
+      "secondary": "#262C3A"
+    },
+    "icons": {
+      "fill": "#4F5A74",
+      "background": "#FFFFFF"
+    },
+    "graphs": {
+      "background": "none",
+      "chart": {
+        "dataTracker": "#FF6B6B",
+        "locationTracker": "#FF9F43",
+        "pageHijacker": "#3F8E4E",
+        "emailSpammer": "#FFDD00"
+      }
+    },
+    "states": {
+      "button": {
+        "default": {
+          "background": "#1E87F0",
+          "text": "#FFFFFF"
+        },
+        "hover": {
+          "background": "#1765B0",
+          "text": "#FFFFFF"
+        },
+        "active": {
+          "background": "#145D91",
+          "text": "#FFFFFF"
+        },
+        "disabled": {
+          "background": "#B0BEC5",
+          "text": "#FFFFFF"
+        },
+        "focus": {
+          "border": "#4E5B76"
+        }
+      }
+    }
+  },
+  "rules": {
+    "DO_NOT": [
+      "Apply gradients on text elements",
+      "Use button colors as text colors",
+      "Apply card background gradients to icons"
+    ]
+  }
+}

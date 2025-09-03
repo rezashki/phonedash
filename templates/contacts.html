@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دفترچه تلفن حوزه مدیرعامل میدکو - مخاطبین</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    // fontFamily will be set by styles.css
+                }
+            }
+        }
+    </script>
+    <!-- Link to external stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- SheetJS (xlsx.js) CDN for Excel export -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        /* Basic modal styles with dark theme */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: linear-gradient(135deg, #1E2A47 0%, #3A3F65 100%);
+            margin: auto;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 700px;
+            position: relative;
+            border: 1px solid #2E365A;
+            color: #FFFFFF;
+        }
+        .close-button {
+            color: #A2A7B3;
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+            transition: color 0.2s ease;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: #FFFFFF;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        /* Styles for the company tree diagram */
+        .company-tree {
+            direction: rtl;
+            text-align: right;
+            padding-right: 20px;
+            color: #FFFFFF;
+        }
+        .company-tree ul {
+            list-style-type: none;
+            padding-right: 20px;
+            position: relative;
+        }
+        .company-tree ul ul {
+            border-right: 1px solid #2E365A;
+            margin-right: 10px;
+        }
+        .company-tree li {
+            margin: 8px 0;
+            position: relative;
+        }
+        .company-tree li::before {
+            content: '';
+            position: absolute;
+            top: 12px;
+            right: -20px;
+            width: 20px;
+            height: 0;
+            border-top: 1px solid #2E365A;
+        }
+        .company-tree li:last-child::before {
+            height: 10px;
+        }
+        .company-tree .tree-node-content {
+            display: inline-block;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #1E2A47 0%, #3A3F65 100%);
+            border: 1px solid #2E365A;
+            border-radius: 8px;
+            font-size: 0.9em;
+            white-space: nowrap;
+            color: #FFFFFF;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        /* Style for sortable table headers */
+        .sortable-header {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            color: #FFFFFF;
+        }
+        .sort-icon {
+            width: 16px;
+            height: 16px;
+            vertical-align: middle;
+            fill: #FFFFFF;
+            transition: transform 0.2s ease-in-out;
+        }
+        .sort-icon.asc {
+            transform: rotate(180deg);
+        }
+
+        /* Specific styles for phone number columns to ensure LTR display */
+        .phone-number-column {
+            direction: ltr; /* Force left-to-right for phone numbers */
+            text-align: right; /* Align numbers to the right within LTR context */
+        }
+
+        /* Autosuggest dropdown styles */
+        #autosuggestDropdown {
+            position: absolute;
+            z-index: 100;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%; /* Adjusted width to match parent container */
+            top: 100%; /* Position below the search input */
+            right: 0; /* Align to the right for RTL */
+            margin-top: 0.25rem;
+            display: none; /* Hidden by default */
+        }
+
+        .autosuggest-item {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            text-align: right; /* Align text to the right within the dropdown */
+        }
+
+        .autosuggest-item:hover {
+            background-color: #f0f4f8;
+        }
+
+        /* Column Visibility Dropdown */
+        #columnVisibilityDropdown {
+            position: absolute;
+            top: 100%; /* Position below the button */
+            right: 0; /* Align to the right of the button */
+            z-index: 50;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 0.5rem;
+            display: none; /* Hidden by default */
+            min-width: 200px; /* Ensure enough space for content */
+            text-align: right; /* Align text to the right */
+        }
+
+        #columnVisibilityDropdown label {
+            padding: 0.25rem 0.5rem;
+            display: flex; /* Use flexbox for alignment */
+            align-items: center; /* Vertically align items */
+            justify-content: space-between; /* Space out text and checkbox */
+            width: 100%; /* Take full width */
+        }
+
+        #columnVisibilityDropdown label:hover {
+            background: var(--button-secondary);
+            color: #FFFFFF;
+        }
+
+        /* Custom Warning Modal Styles with dark theme */
+        .warning-modal-content {
+            background: linear-gradient(135deg, #7F1D1D 0%, #991B1B 100%);
+            border: 1px solid #DC2626;
+            color: #FEE2E2;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
+        }
+        .warning-modal-content .close-button {
+            color: #FEE2E2;
+        }
+        .warning-modal-content .close-button:hover {
+            color: #FFFFFF;
+        }
+        .warning-modal-content h2 {
+            color: #FEE2E2;
+        }
+
+        /* Bulk Actions Container */
+        #bulkActionsContainer {
+            background-color: #e0f2fe; /* light blue */
+            border: 1px solid #90cdf4; /* slightly darker blue */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            justify-content: flex-start; /* Align items to the start (right for RTL) */
+            gap: 1rem; /* Space between buttons */
+            flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+        }
+
+    </style>
+</head>
+<body class="bg-gray-100 flex min-h-screen">
+    <!-- Sidebar -->
+    {% include 'sidebar.html' %}
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col items-center p-4">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-7xl">
+            <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">مخاطبین</h1>
+
+            <!-- Controls (Search, Add, Export, Import, Column Visibility) -->
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse">
+                <!-- Right-aligned group (search, clear, add new contact) -->
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                    <div class="relative flex-1"> <!-- This div wraps only the search input and its dropdown -->
+                        <input type="text" id="searchInput" placeholder="جستجو بر اساس نام، شرکت، تلفن..."
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                        <div id="autosuggestDropdown" class="absolute w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-10 top-full right-0"></div>
+                    </div>
+                    <button id="searchBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-300 ease-in-out">
+                        پاک کردن جستجو
+                    </button>
+                    <button id="addContactRedirectBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-300 ease-in-out">
+                        افزودن مخاطب جدید
+                    </button>
+                </div>
+
+                <!-- Left-aligned group (Export, Import, Column Visibility) -->
+                <div class="flex items-center space-x-2 space-x-reverse">
+                    <button id="exportExcelBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-300 ease-in-out">
+                        خروجی اکسل
+                    </button>
+                    <button id="importExcelBtn" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-300 ease-in-out">
+                        ورودی اکسل
+                    </button>
+                    <div class="relative">
+                        <button id="toggleColumnsBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-md shadow-lg transition duration-300 ease-in-out">
+                            نمایش/عدم نمایش ستون‌ها
+                        </button>
+                        <div id="columnVisibilityDropdown" class="absolute mt-2 p-2 bg-white rounded-md shadow-lg">
+                            <!-- Checkboxes will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulk Actions Container -->
+            <div id="bulkActionsContainer" class="hidden flex-row items-center mb-4 p-4 rounded-lg shadow-md">
+                <span class="text-gray-700 font-semibold ml-4">عملیات گروهی:</span>
+                <button id="deleteSelectedBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-300 ease-in-out">
+                    حذف انتخاب شده‌ها
+                </button>
+            </div>
+
+
+            <!-- Contact List Table -->
+            <div id="tableScrollContainer" class="overflow-x-auto relative shadow-md sm:rounded-lg" style="max-height: 600px;">
+                <table id="contactList" class="min-w-full bg-white rounded-lg">
+                    <thead>
+                        <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                            <th class="py-3 px-6 text-center w-12">
+                                <input type="checkbox" id="selectAllCheckbox" class="form-checkbox text-blue-600 rounded">
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="full_name">
+                                        <span>نام و نام خانوادگی</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="full_name">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="main_company">
+                                        <span>شرکت / سازمان اصلی</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="main_company">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="job_title">
+                                        <span>عنوان شغلی</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="job_title">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="mobile_phone">
+                                        <span>شماره همراه</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="mobile_phone">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="office_phone1">
+                                        <span>تلفن اداری 1</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="office_phone1">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="extension1">
+                                        <span>داخلی 1</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="extension1">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="office_phone2">
+                                        <span>تلفن اداری 2</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="office_phone2">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="extension2">
+                                        <span>داخلی 2</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="extension2">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="office_phone3">
+                                        <span>تلفن اداری 3</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="office_phone3">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="extension3">
+                                        <span>داخلی 3</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="extension3">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="email">
+                                        <span>ایمیل</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="email">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="office_manager_name1">
+                                        <span>نام مسئول دفتر 1</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="office_manager_name1">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="office_manager_mobile1">
+                                        <span>شماره همراه مسئول دفتر 1</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="office_manager_mobile1">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="office_manager_name2">
+                                        <span>نام مسئول دفتر 2</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="office_manager_name2">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="office_manager_mobile2">
+                                        <span>شماره همراه مسئول دفتر 2</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="office_manager_mobile2">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="office_manager_name3">
+                                        <span>نام مسئول دفتر 3</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="office_manager_name3">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="office_manager_mobile3">
+                                        <span>شماره همراه مسئول دفتر 3</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="office_manager_mobile3">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="office_email">
+                                        <span>ایمیل دفتر</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="office_email">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="subject_category">
+                                        <span>دسته بندی موضوع</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="subject_category">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="country">
+                                        <span>کشور</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="country">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="address">
+                                        <span>آدرس</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="address">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="postal_code">
+                                        <span>کدپستی</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="postal_code">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-right">
+                                <div class="relative inline-block text-right">
+                                    <button class="sortable-header inline-flex items-center" data-sort="description">
+                                        <span>توضیحات</span>
+                                        <svg class="sort-icon w-4 h-4 ml-1" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="sort-dropdown-menu absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10" data-sort-for="description">
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="asc">صعودی</button>
+                                        <button class="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-direction="desc">نزولی</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="py-3 px-6 text-center" data-column-type="actions">عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-600 text-sm font-light">
+                        <!-- Contact rows will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="loadingIndicator" class="text-center py-4 text-gray-500" style="display:none;">در حال بارگذاری...</div>
+        </div>
+    </div>
+
+    <!-- View Contact Modal -->
+    <div id="viewContactModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 text-right">جزئیات مخاطب</h2>
+            <div id="viewContactDetails" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-right mb-6">
+                <!-- Details will be populated by JavaScript -->
+            </div>
+            <h3 class="text-xl font-bold mb-4 text-gray-800 text-right">نمودار سلسله مراتب شرکت</h3>
+            <div id="companyTreeContainer" class="company-tree hidden bg-gray-50 p-4 rounded-md border border-gray-200">
+                <div id="companyTree">
+                    <!-- Company tree will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="flex justify-start mt-6">
+                <button type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md close-button-bottom">بستن</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Contact Modal -->
+    <div id="editContactModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 text-right">ویرایش مخاطب</h2>
+            <form id="editContactForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <input type="hidden" id="editContactId" name="id">
+                <div>
+                    <label for="editFullName" class="block text-gray-700 text-sm font-medium mb-2">نام و نام خانوادگی:</label>
+                    <input type="text" id="editFullName" name="fullName" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editMainCompany" class="block text-gray-700 text-sm font-medium mb-2">شرکت / سازمان اصلی:</label>
+                    <select id="editMainCompany" name="mainCompany"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+                <div>
+                    <label for="editJobTitle" class="block text-gray-700 text-sm font-medium mb-2">عنوان شغلی:</label>
+                    <input type="text" id="editJobTitle" name="jobTitle"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editMobilePhone" class="block text-gray-700 text-sm font-medium mb-2">شماره همراه:</label>
+                    <input type="tel" id="editMobilePhone" name="mobilePhone"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editOfficePhone1" class="block text-gray-700 text-sm font-medium mb-2">تلفن اداری 1:</label>
+                    <input type="tel" id="editOfficePhone1" name="officePhone1"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editExtension1" class="block text-gray-700 text-sm font-medium mb-2">داخلی 1:</label>
+                    <input type="text" id="editExtension1" name="extension1"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editOfficePhone2" class="block text-gray-700 text-sm font-medium mb-2">تلفن اداری 2:</label>
+                    <input type="tel" id="editOfficePhone2" name="officePhone2"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editExtension2" class="block text-gray-700 text-sm font-medium mb-2">داخلی 2:</label>
+                    <input type="text" id="editExtension2" name="extension2"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editOfficePhone3" class="block text-gray-700 text-sm font-medium mb-2">تلفن اداری 3:</label>
+                    <input type="tel" id="editOfficePhone3" name="officePhone3"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editExtension3" class="block text-gray-700 text-sm font-medium mb-2">داخلی 3:</label>
+                    <input type="text" id="editExtension3" name="extension3"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editEmail" class="block text-gray-700 text-sm font-medium mb-2">ایمیل:</label>
+                    <input type="email" id="editEmail" name="email"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editOfficeManagerName1" class="block text-gray-700 text-sm font-medium mb-2">نام مسئول دفتر 1:</label>
+                    <input type="text" id="editOfficeManagerName1" name="officeManagerName1"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editOfficeManagerMobile1" class="block text-gray-700 text-sm font-medium mb-2">شماره همراه مسئول دفتر 1:</label>
+                    <input type="tel" id="editOfficeManagerMobile1" name="officeManagerMobile1"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editOfficeManagerName2" class="block text-gray-700 text-sm font-medium mb-2">نام مسئول دفتر 2:</label>
+                    <input type="text" id="editOfficeManagerName2" name="officeManagerName2"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editOfficeManagerMobile2" class="block text-gray-700 text-sm font-medium mb-2">شماره همراه مسئول دفتر 2:</label>
+                    <input type="tel" id="editOfficeManagerMobile2" name="officeManagerMobile2"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editOfficeManagerName3" class="block text-gray-700 text-sm font-medium mb-2">نام مسئول دفتر 3:</label>
+                    <input type="text" id="editOfficeManagerName3" name="officeManagerName3"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editOfficeManagerMobile3" class="block text-gray-700 text-sm font-medium mb-2">شماره همراه مسئول دفتر 3:</label>
+                    <input type="tel" id="editOfficeManagerMobile3" name="officeManagerMobile3"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editOfficeEmail" class="block text-gray-700 text-sm font-medium mb-2">ایمیل دفتر:</label>
+                    <input type="email" id="editOfficeEmail" name="officeEmail"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editSubjectCategory" class="block text-gray-700 text-sm font-medium mb-2">دسته بندی موضوع:</label>
+                    <input type="text" id="editSubjectCategory" name="subjectCategory"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div>
+                    <label for="editCountry" class="block text-gray-700 text-sm font-medium mb-2">کشور:</label>
+                    <input type="text" id="editCountry" name="country"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div class="lg:col-span-2">
+                    <label for="editAddress" class="block text-gray-700 text-sm font-medium mb-2">آدرس:</label>
+                    <textarea id="editAddress" name="address" rows="3"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right"></textarea>
+                </div>
+                <div>
+                    <label for="editPostalCode" class="block text-gray-700 text-sm font-medium mb-2">کدپستی:</label>
+                    <input type="text" id="editPostalCode" name="postalCode"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                </div>
+                <div class="lg:col-span-3">
+                    <label for="editDescription" class="block text-gray-700 text-sm font-medium mb-2">توضیحات:</label>
+                    <textarea id="editDescription" name="description" rows="4"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right"></textarea>
+                </div>
+                <div class="lg:col-span-3 flex justify-start mt-6">
+                    <button type="submit"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105 ml-2">
+                        ذخیره تغییرات
+                    </button>
+                    <button type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md close-button-bottom">لغو</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content text-center">
+            <span class="close-button">&times;</span>
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">تایید حذف</h2>
+            <p class="mb-6 text-gray-700">آیا مطمئن هستید که می‌خواهید این مخاطب را حذف کنید؟ این عمل قابل بازگشت نیست.</p>
+            <div class="flex justify-center space-x-4 space-x-reverse">
+                <button id="confirmDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md">حذف</button>
+                <button class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md close-button-bottom">لغو</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Company Modal (when opened from contacts.html) -->
+    <div id="addCompanyModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">افزودن شرکت جدید</h2>
+            <form id="companyFormModal" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="modalCompanyName" class="block text-gray-700 text-sm font-medium mb-2">نام شرکت / سازمان:</label>
+                    <input type="text" id="modalCompanyName" name="companyName" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="مثال: شرکت توسعه فناوری">
+                </div>
+                <div>
+                    <label for="modalSubCompany1" class="block text-gray-700 text-sm font-medium mb-2">شرکت / سازمان تابعه سطح 1:</label>
+                    <input type="text" id="modalSubCompany1" name="subCompany1"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="md:col-span-2">
+                    <label for="modalSubCompany2" class="block text-gray-700 text-sm font-medium mb-2">شرکت / سازمان تابعه سطح 2:</label>
+                    <input type="text" id="modalSubCompany2" name="subCompany2"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="مثال: نام شرکت زیرمجموعه شرکت /سازمان سطح 1">
+                </div>
+                <div class="md:col-span-2 flex justify-start mt-6">
+                    <button type="submit"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105 ml-2">
+                        افزودن شرکت
+                    </button>
+                    <button type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md close-button-bottom">لغو</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Warning Modal -->
+    <div id="warningModal" class="modal">
+        <div class="warning-modal-content">
+            <span class="close-button">&times;</span>
+            <h2 class="text-2xl font-bold mb-4">پیام</h2>
+            <p id="warningMessage" class="mb-6"></p>
+            <div class="flex justify-center">
+                <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md close-button-bottom">بستن</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link to contacts-specific JavaScript -->
+    <script type="module" src="{{ url_for('static', filename='js/contacts.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/contactModals.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/companyData.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/utils.js') }}"></script>
+</body>
+</html>

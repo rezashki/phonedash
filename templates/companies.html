@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دفترچه تلفن حوزه مدیرعامل میدکو - شرکت‌ها</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    // fontFamily will be set by styles.css
+                }
+            }
+        }
+    </script>
+    <!-- Link to external stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- SheetJS (xlsx.js) CDN for Excel export -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        /* Basic modal styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 700px; /* Adjusted for company form */
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            float: left; /* Adjusted for RTL */
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        /* Style for sortable table headers */
+        .sortable-header {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end; /* Align text to right for RTL */
+            gap: 4px; /* Space between text and icon */
+        }
+        .sort-icon {
+            width: 16px;
+            height: 16px;
+            vertical-align: middle;
+            fill: currentColor;
+            transition: transform 0.2s ease-in-out;
+        }
+        .sort-icon.asc {
+            transform: rotate(180deg); /* Point up for ascending */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex min-h-screen">
+    <!-- Sidebar -->
+    {% include 'sidebar.html' %}
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col items-center p-4">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-6xl">
+            <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">شرکت‌ها و سازمان‌ها</h1>
+
+            <!-- Company Controls -->
+            <div class="flex justify-start mb-6">
+                <button id="addCompanyBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-300 ease-in-out">
+                    افزودن شرکت جدید
+                </button>
+            </div>
+
+            <!-- Company List Section -->
+            <div>
+                <div id="companyList" class="overflow-x-auto">
+                    <table class="min-w-full bg-white rounded-lg shadow-md">
+                        <thead>
+                            <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                                <th class="py-3 px-6 text-right">
+                                    <button class="sortable-header" data-sort="company_name">
+                                        <span>نام شرکت / سازمان</span>
+                                        <svg class="sort-icon" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                </th>
+                                <th class="py-3 px-6 text-right">
+                                    <button class="sortable-header" data-sort="sub_company1">
+                                        <span>شرکت / سازمان تابعه سطح 1</span>
+                                        <svg class="sort-icon" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                </th>
+                                <th class="py-3 px-6 text-right">
+                                    <button class="sortable-header" data-sort="sub_company2">
+                                        <span>شرکت / سازمان تابعه سطح 2</span>
+                                        <svg class="sort-icon" viewBox="0 0 24 24">
+                                            <path d="M7 10l5 5 5-5z"/>
+                                        </svg>
+                                    </button>
+                                </th>
+                                <th class="py-3 px-6 text-center">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-600 text-sm font-light">
+                            <!-- Company rows will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Company Modal -->
+    <div id="addCompanyModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">افزودن شرکت جدید</h2>
+            <form id="companyForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="companyName" class="block text-gray-700 text-sm font-medium mb-2">نام شرکت / سازمان:</label>
+                    <input type="text" id="companyName" name="companyName" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="مثال: شرکت توسعه فناوری">
+                </div>
+                <div>
+                    <label for="subCompany1" class="block text-gray-700 text-sm font-medium mb-2">شرکت / سازمان تابعه سطح 1:</label>
+                    <input type="text" id="subCompany1" name="subCompany1"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="مثال: نام شرکت زیرمجموعه شرکت اصلی">
+                </div>
+                <div class="md:col-span-2">
+                    <label for="subCompany2" class="block text-gray-700 text-sm font-medium mb-2">شرکت / سازمان تابعه سطح 2:</label>
+                    <input type="text" id="subCompany2" name="subCompany2"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="مثال: نام شرکت زیرمجموعه شرکت /سازمان سطح 1">
+                </div>
+                <div class="md:col-span-2 flex justify-start mt-6">
+                    <button type="submit"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105 ml-2">
+                        افزودن شرکت
+                    </button>
+                    <button type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md close-button-bottom">لغو</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Company Modal -->
+    <div id="editCompanyModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">ویرایش شرکت</h2>
+            <form id="editCompanyForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <input type="hidden" id="editCompanyId" name="id">
+                <div>
+                    <label for="editCompanyName" class="block text-gray-700 text-sm font-medium mb-2">نام شرکت / سازمان:</label>
+                    <input type="text" id="editCompanyName" name="companyName" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="editSubCompany1" class="block text-gray-700 text-sm font-medium mb-2">شرکت / سازمان تابعه سطح 1:</label>
+                    <input type="text" id="editSubCompany1" name="subCompany1"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="md:col-span-2">
+                    <label for="editSubCompany2" class="block text-gray-700 text-sm font-medium mb-2">شرکت / سازمان تابعه سطح 2:</label>
+                    <input type="text" id="editSubCompany2" name="subCompany2"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="md:col-span-2 flex justify-start mt-6">
+                    <button type="submit"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105 ml-2">
+                        ذخیره تغییرات
+                    </button>
+                    <button type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md close-button-bottom">لغو</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteCompanyConfirmModal" class="modal">
+        <div class="modal-content text-center">
+            <span class="close-button">&times;</span>
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">تایید حذف</h2>
+            <p class="mb-6 text-gray-700">آیا مطمئن هستید که می‌خواهید این شرکت را حذف کنید؟ این عمل قابل بازگشت نیست.</p>
+            <div class="flex justify-center space-x-4 space-x-reverse">
+                <button id="confirmDeleteCompanyBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md">حذف</button>
+                <button class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md close-button-bottom">لغو</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link to companies-specific JavaScript -->
+    <script src="{{ url_for('static', filename='js/companies.js') }}"></script>
+</body>
+</html>
